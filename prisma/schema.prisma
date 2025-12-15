@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              Int      @id @default(autoincrement())
+  providerId      String   @unique
+  providerIdEmail String?  @unique @map("providerId_email")
+  name            String?
+  profileImageUrl String?  @map("profile_image_url")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  chatRooms    ChatRoom[]    @relation("UserChatRooms")
+  chatMessages ChatMessage[] @relation("UserChatMessages")
+
+  @@map("users")
+}
+
+model ChatRoom {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user     User          @relation("UserChatRooms", fields: [userId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@map("chat_room")
+}
+
+model ChatMessage {
+  id         Int      @id @default(autoincrement())
+  chatRoomId Int      @map("chat_room_id")
+  userId     Int      @map("user_id")
+  content    String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  chatRoom ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  user     User     @relation("UserChatMessages", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
