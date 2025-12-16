@@ -1,34 +1,33 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { SocialUser } from './social-user.interface';
+import { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post()
-  create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
-  }
+  @Get('login/kakao')
+  @UseGuards(AuthGuard('kakao'))
+  async kakaoLogin() {}
 
-  @Get()
-  findAll() {
-    return this.authService.findAll();
-  }
+  @Get('kakao/callback')
+  @UseGuards(AuthGuard('kakao'))
+  async kakaoLoginCallback(
+    @Req() req: { user: SocialUser },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { accessToken, refreshToken } = await this.authService.kakaoLogin(
+      req.user,
+    );
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
-  }
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      // secure: true, // TODO: HTTPS 적용 시 주석 해제
+      sameSite: 'strict',
+    });
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+    return { accessToken };
   }
 }

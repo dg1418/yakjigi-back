@@ -1,53 +1,45 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id              Int      @id @default(autoincrement())
-  providerId      String   @unique
-  providerIdEmail String?  @unique @map("providerId_email")
-  name            String?
-  profileImageUrl String?  @map("profile_image_url")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+model ChatMessage {
+  id         Int       @id @default(autoincrement())
+  chatRoomId Int       @map("chat_room_id")
+  userId     Int       @map("user_id")
+  content    String?
+  createdAt  DateTime  @default(now()) @map("created_at")
+  chatRoom   ChatRoom  @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  chatRooms    ChatRoom[]    @relation("UserChatRooms")
-  chatMessages ChatMessage[] @relation("UserChatMessages")
-
-  @@map("users")
+  @@map("chat_messages")
 }
 
 model ChatRoom {
-  id        Int      @id @default(autoincrement())
-  userId    Int      @map("user_id")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user     User          @relation("UserChatRooms", fields: [userId], references: [id], onDelete: Cascade)
-  messages ChatMessage[]
+  id           Int           @id @default(autoincrement())
+  userId       Int           @map("user_id")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  chatMessages ChatMessage[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("chat_room")
 }
 
-model ChatMessage {
-  id         Int      @id @default(autoincrement())
-  chatRoomId Int      @map("chat_room_id")
-  userId     Int      @map("user_id")
-  content    String?  @db.Text
-  createdAt  DateTime @default(now()) @map("created_at")
+model User {
+  id              Int           @id @default(autoincrement())
+  providerId      String        @unique
+  providerIdEmail String?       @unique @map("providerId_email")
+  name            String?
+  profileImageUrl String?       @map("profile_image_url")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  chatMessages    ChatMessage[]
+  chatRooms       ChatRoom[]
 
-  chatRoom ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  user     User     @relation("UserChatMessages", fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("chat_messages")
+  @@map("users")
 }
