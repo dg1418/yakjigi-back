@@ -6,12 +6,15 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { ChatRoomService } from './chat-room.service';
 import { CreateChatRoomDto } from './dto/create-chat-room.dto';
 import { UpdateChatRoomDto } from './dto/update-chat-room.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('chat-rooms')
+@UseGuards(AuthGuard('jwt'))
 export class ChatRoomController {
   constructor(private readonly chatRoomService: ChatRoomService) {}
 

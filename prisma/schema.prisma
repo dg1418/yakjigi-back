@@ -1,7 +1,5 @@
 generator client {
-  provider     = "prisma-client"
-  output       = "../generated/prisma"
-  moduleFormat = "cjs"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -9,13 +7,13 @@ datasource db {
 }
 
 model ChatMessage {
-  id         Int       @id @default(autoincrement())
-  chatRoomId Int       @map("chat_room_id")
-  userId     Int       @map("user_id")
+  id         Int      @id @default(autoincrement())
+  chatRoomId Int      @map("chat_room_id")
+  userId     Int      @map("user_id")
   content    String?
-  createdAt  DateTime  @default(now()) @map("created_at")
-  chatRoom   ChatRoom  @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at")
+  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("chat_messages")
 }

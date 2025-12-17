@@ -1,26 +1,50 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserRepository } from './user.repository';
+import { Prisma } from 'generated/prisma/client';
 
 @Injectable()
 export class UserService {
+  constructor(private readonly userRepository: UserRepository) {}
+  async findOne(id: number) {
+    const user = await this.userRepository.findOneById(id);
+
+    if (!user) {
+      throw new NotFoundException('해당 id의 유저가 없습니다.');
+    }
+
+    return user;
+  }
+
   create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
-  }
-
-  findAll() {
-    return `This action returns all user`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+    const data = this.DtoToModel(createUserDto) as Prisma.UserCreateInput;
+    return this.userRepository.create(data);
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+    const data = this.DtoToModel(updateUserDto) as Prisma.UserUpdateInput;
+    return this.userRepository.update(id, data);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  DtoToModel(
+    dto: CreateUserDto | UpdateUserDto,
+  ): Prisma.UserCreateInput | Prisma.UserUpdateInput {
+    const model: Prisma.UserCreateInput | Prisma.UserUpdateInput = {};
+
+    if (dto.providerId) {
+      model.providerId = dto.providerId;
+    }
+    if (dto.providerIdEmail) {
+      model.providerIdEmail = dto.providerIdEmail;
+    }
+    if (dto.name) {
+      model.name = dto.name;
+    }
+    if (dto.profileImageUrl) {
+      model.profileImageUrl = dto.profileImageUrl;
+    }
+
+    return model;
   }
 }

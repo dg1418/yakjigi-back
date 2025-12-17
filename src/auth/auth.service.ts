@@ -1,25 +1,43 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 import { SocialUser } from './social-user.interface';
 import { ConfigService } from '@nestjs/config';
 import { envVariableKeys } from './jwt.const';
 import { JwtService } from '@nestjs/jwt';
+import { UserRepository } from 'src/user/user.repository';
+import { CreateUserDto } from 'src/user/dto/create-user.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly userRepository: UserRepository,
   ) {}
 
   async kakaoLogin(user: SocialUser) {
-    let accessToken = 1;
-    let refreshToken = 2;
+    let appUser = await this.userRepository.findOneByProviderId(
+      user.providerId,
+    );
 
-    // @todo : user api 만들고 다시 시작하자
+    if (!appUser) {
+      const data: CreateUserDto = {
+        providerId: user.providerId,
+        name: user.name,
+      };
+      appUser = await this.userRepository.create(data);
+    }
 
-    return { accessToken, refreshToken };
+    const [accessToken, refreshToken] = await Promise.all([
+      this.issueToken(appUser, false),
+      this.issueToken(appUser, true),
+    ]);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
   }
 
   async issueToken(user: { id: number }, isRefreshToken: boolean) {
