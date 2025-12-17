@@ -3,46 +3,30 @@ import {
   Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
+  Query,
   UseGuards,
+  ParseIntPipe,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { ChatMessageService } from './chat-message.service';
 import { CreateChatMessageDto } from './dto/create-chat-message.dto';
-import { UpdateChatMessageDto } from './dto/update-chat-message.dto';
-import { AuthGuard } from '@nestjs/passport';
+import { AuthUser } from 'src/auth/user.decorator';
 
 @Controller('chat-messages')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('access'))
 export class ChatMessageController {
   constructor(private readonly chatMessageService: ChatMessageService) {}
 
   @Post()
-  create(@Body() createChatMessageDto: CreateChatMessageDto) {
-    return this.chatMessageService.create(createChatMessageDto);
+  create(
+    @Body() createChatMessageDto: CreateChatMessageDto,
+    @AuthUser() user: { sub: number },
+  ) {
+    return this.chatMessageService.create(createChatMessageDto, user.sub);
   }
 
   @Get()
-  findAll() {
-    return this.chatMessageService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.chatMessageService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateChatMessageDto: UpdateChatMessageDto,
-  ) {
-    return this.chatMessageService.update(+id, updateChatMessageDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.chatMessageService.remove(+id);
+  findAll(@Query('chatRoomId', ParseIntPipe) chatRoomId: number) {
+    return this.chatMessageService.findAll(chatRoomId);
   }
 }

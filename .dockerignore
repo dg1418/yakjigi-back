@@ -1,0 +1,22 @@
+# Git 관련 폴더
+.git
+.github
+
+# Node.js 종속성 폴더 (빌드 스테이지에서 npm ci로 설치하므로 소스 복사 시 제외)
+node_modules
+
+# npm 디버그 로그
+npm-debug.log
+
+# 운영체제 관련 파일
+.DS_Store
+Thumbs.db
+
+# 환경 변수 파일 (보안상 포함하지 않는 것을 권장)
+.env*
+
+# Docker 관련 파일
+Dockerfile
+.dockerignore
+
+

@@ -1,12 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { envVariableKeys } from './jwt.const';
+import { UserRepository } from 'src/user/user.repository';
+import { Request } from 'express';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(private readonly configService: ConfigService) {
+export class AccessTokenStrategy extends PassportStrategy(Strategy, 'access') {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly userRepository: UserRepository,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -15,8 +24,58 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(payload: { sub: number | string }) {
-    // passport-jwt가 토큰 검증을 완료한 후, 유효한 경우에만 validate 메소드를 호출합니다.
-    // 여기서 반환되는 값은 request.user에 담기게 됩니다.
-    return { id: payload.sub };
+    // const user = await this.userRepository.findOneById(+payload.sub);
+
+    // if (!user) {
+    //   throw new NotFoundException(
+    //     'access 토큰 확인시 유저가 존재하지 않습니다.',
+    //   );
+    // }
+
+    return payload;
+  }
+}
+
+@Injectable()
+export class RefreshTokenStrategy extends PassportStrategy(
+  Strategy,
+  'refresh',
+) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly userRepository: UserRepository,
+  ) {
+    super({
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (request: Request) => {
+          // ? 옵셔널 을 붙여준 이유는 request 나 cookies 에 값이 없을때
+          // null 을 반환하여 서버 종료를 방지하기 위함
+          return request?.cookies?.refreshToken || null;
+        },
+      ]),
+      ignoreExpiration: false,
+      passReqToCallback: true,
+      secretOrKey: configService.get<string>(
+        envVariableKeys.refreshTokenSecret,
+      ),
+    });
+  }
+
+  async validate(request: Request, payload: { sub: number | string }) {
+    const refreshToken = request?.cookies?.refreshToken;
+
+    if (!refreshToken) {
+      throw new UnauthorizedException('No Refresh Token provided');
+    }
+
+    // const user = await this.userRepository.findOneById(+payload.sub);
+
+    // if (!user) {
+    //   throw new NotFoundException(
+    //     'access 토큰 확인시 유저가 존재하지 않습니다.',
+    //   );
+    // }
+
+    return payload;
   }
 }

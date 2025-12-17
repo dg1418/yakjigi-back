@@ -1,26 +1,17 @@
 import { Injectable } from '@nestjs/common';
+import { ChatRoomRepository } from './chat-room.repository';
 import { CreateChatRoomDto } from './dto/create-chat-room.dto';
-import { UpdateChatRoomDto } from './dto/update-chat-room.dto';
 
 @Injectable()
 export class ChatRoomService {
-  create(createChatRoomDto: CreateChatRoomDto) {
-    return 'This action adds a new chatRoom';
+  constructor(private readonly chatRoomRepository: ChatRoomRepository) {}
+
+  async create(userId: number) {
+    // DTO is currently empty, but we pass it for future-proofing
+    return this.chatRoomRepository.create(userId);
   }
 
-  findAll() {
-    return `This action returns all chatRoom`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} chatRoom`;
-  }
-
-  update(id: number, updateChatRoomDto: UpdateChatRoomDto) {
-    return `This action updates a #${id} chatRoom`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} chatRoom`;
+  async findAll(userId: number) {
+    return this.chatRoomRepository.findAllByUserId(userId);
   }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Req, Res, Post } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import { SocialUser } from './social-user.interface';
@@ -28,6 +28,19 @@ export class AuthController {
       sameSite: 'strict',
     });
 
-    return { accessToken };
+    // 프론트엔드 메인 페이지로 리다이렉트하면서 accessToken을 쿼리 파라미터로 전달
+    res.redirect(`http://localhost/?accessToken=${accessToken}`);
+  }
+
+  @Get('access-token/refresh')
+  @UseGuards(AuthGuard('refresh'))
+  async refresh(@Req() req: { payload: { sub: number | string } }) {
+    const user = {
+      id: +req.payload.sub,
+    };
+
+    return {
+      accessToken: await this.authService.issueToken(user, false),
+    };
   }
 }
